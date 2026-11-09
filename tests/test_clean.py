@@ -35,3 +35,26 @@ def test_clean_html_keeps_the_post():
     assert "https://substackcdn.com/image/fetch/w_1456/photo.jpg" in out
     assert ">an article</a>" in out
     assert "Like</a>" not in out and "Unsubscribe" not in out
+
+
+def test_clean_html_strips_substack_email_chrome():
+    out = clean_html(POST_HTML)
+    for chrome in (
+        "Preview line",
+        "View in browser",
+        "READ IN APP",
+        "Example Author",
+        "Paid",
+        "Restack",
+        "548 Market",
+        "post-title",
+    ):
+        assert chrome not in out, chrome
+    assert "A subtitle worth keeping" in out
+    assert out.index("A subtitle worth keeping") < out.index("<h1>Hello</h1>")
+    assert "A footnote." in out
+
+
+def test_clean_html_leaves_other_newsletters_whole():
+    html = "<html><body><div class='post'><p>Not substack</p></div><p>footer</p></body></html>"
+    assert clean_html(html) == '<div class="post"><p>Not substack</p></div><p>footer</p>'

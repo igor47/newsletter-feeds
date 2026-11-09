@@ -107,5 +107,41 @@ def clean_html(html: str) -> str:
                     tag[name] = _strip_params(value)
                 else:
                     del tag[name]
+    post = _substack_post(soup)
+    if post is not None:
+        return str(post)
     body = soup.body
     return body.decode_contents() if body else str(soup)
+
+
+# inside a Substack post: email furniture that a feed reader shows anyway
+# (title, author, date) or that only makes sense in a mail client
+_SUBSTACK_CHROME = (
+    "table.post-meta",  # author, date, Paid/Preview badge, READ IN APP
+    ".email-ufi-2-row",  # Like / Comment / Restack row
+    "[class*=email-button-outline-wrapper]",
+    ".footer",  # copyright, postal address, unsubscribe
+)
+
+
+def _substack_post(soup: BeautifulSoup) -> Tag | None:
+    """The post itself from a Substack email, minus the email chrome.
+
+    A Substack email is a hidden preview line, a "View in browser" bar, then
+    two ``div.post``s: one holding the header (title, subtitle,
+    ``table.post-meta``), one holding ``div.body.markup`` (and footnotes),
+    followed by button rows and the footer. Keep the body's ``div.post``,
+    preceded by the subtitle; the reader already shows title and author.
+    Returns None for anything that does not look like that.
+    """
+    body = soup.select_one("div.post div.body.markup")
+    post = body.find_parent("div", class_="post") if body else None
+    if post is None:
+        return None
+    for tag in post.select(", ".join(_SUBSTACK_CHROME)):
+        tag.decompose()
+    subtitle = soup.select_one("div.post-header h3.subtitle")
+    if subtitle is not None and subtitle.get_text(strip=True):
+        subtitle.extract()
+        post.insert(0, subtitle)
+    return post

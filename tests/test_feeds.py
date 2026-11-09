@@ -25,6 +25,7 @@ def test_feeds_group_by_list_and_sort_newest_first(maildir: Path):
     feeds = Archive(maildir).feeds()
     assert set(feeds) == {"example.substack.com", "other.substack.com"}
     example = feeds["example.substack.com"]
+    # the comment reaction (X-Mailgun-Tag: post-comment-reaction) is not a post
     assert [h.subject for h in example.entries] == ["Second post", "First post"]
     assert example.entries[0].link == "https://example.substack.com/p/two"
 

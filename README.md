@@ -13,7 +13,7 @@ whole post.
    the inbox. With maildrop (`~/.mailfilter`):
 
    ```
-   if (/^List-Id: <[a-z0-9-]+\.substack\.com>/)
+   if (/^List-Id: <[a-z0-9-]+\.substack\.com>/ && /^X-Mailgun-Tag: post$/)
        to "$HOME/newsletters/"
    ```
 
@@ -40,7 +40,14 @@ feed (`src/newsletter_feeds/clean.py`):
 - Like/Comment/Restack/Share buttons (`app-link`, `?action=`), which carry a
   login token, are removed, along with the unsubscribe link;
 - `token`, `r`, `utm_*` and similar parameters are stripped from every link
-  and image URL.
+  and image URL;
+- for Substack, the email chrome goes too: the hidden preview line, "View in
+  browser", the author/date/Paid block and READ IN APP, the Like/Comment row,
+  and the footer. The subtitle and the post body (with footnotes) stay.
+
+Substack also sends receipts, comment reactions, gift reminders and digests
+with the publication's `List-Id`. Only mail with `X-Mailgun-Tag: post` becomes
+a feed entry. Mail without that header (other senders) is always included.
 
 ## Running
 

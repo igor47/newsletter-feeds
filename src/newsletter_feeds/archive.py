@@ -57,11 +57,24 @@ def list_slug(list_id: str) -> str | None:
     return slug if _SLUG_OK.match(slug) else None
 
 
+def is_post(msg: EmailMessage) -> bool:
+    """False for a list's non-post mail, where the sender says which is which.
+
+    Substack sends receipts, comment reactions, gift reminders and digests
+    with the publication's List-Id too; only posts carry
+    ``X-Mailgun-Tag: post``. Comment reactions even carry the post's
+    List-Post URL, and since that URL is the entry id they would replace the
+    post in a reader. Mail without the header (other senders) counts as a post.
+    """
+    tag = msg.get("X-Mailgun-Tag")
+    return tag is None or str(tag).strip() == "post"
+
+
 def _read_header(key: str, path: Path) -> Header | None:
     with path.open("rb") as f:
         msg = email.message_from_binary_file(f, policy=policy.default, _class=EmailMessage)
     slug = list_slug(str(msg.get("List-Id", "")))
-    if slug is None:
+    if slug is None or not is_post(msg):
         return None
     try:
         date = parsedate_to_datetime(str(msg["Date"]))
