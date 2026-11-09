@@ -69,6 +69,8 @@ def test_atom_feed(server: str):
     assert [e.findtext("a:title", namespaces=NS) for e in entries] == ["Second post", "First post"]
     content = entries[0].findtext("a:content", namespaces=NS) or ""
     assert "<h1>Hello</h1>" in content and "token=" not in content
+    # id matches Substack's public RSS guid (the bare post URL)
+    assert entries[0].findtext("a:id", namespaces=NS) == "https://example.substack.com/p/two"
     link = entries[0].find("a:link", NS)
     assert link is not None and link.get("href") == "https://example.substack.com/p/two"
 

@@ -22,7 +22,11 @@ def render_feed(feed: Feed, entries: list[Entry], self_url: str) -> bytes:
     for entry in entries:
         h = entry.header
         e = SubElement(root, "entry")
-        SubElement(e, "id").text = f"urn:message-id:{h.message_id}"
+        # the post URL when there is one: Substack's public RSS uses exactly
+        # that as each item's guid, so a reader that switches a subscription
+        # from the public feed to this one matches entries it already has
+        # (keeping read/starred state, upgrading paywalled previews in place)
+        SubElement(e, "id").text = h.link or f"urn:message-id:{h.message_id}"
         SubElement(e, "title").text = h.subject
         if h.link:
             SubElement(e, "link", rel="alternate", href=h.link)
