@@ -1,0 +1,43 @@
+[tools]
+# pin the exact patch version: vague versions can resolve to a release too new
+# to have a precompiled binary, making CI compile python from source
+python = "3.13.13"
+uv = "latest"
+
+[env]
+# uv should use mise's python and the project venv
+UV_PYTHON = "{{config_root}}/.venv/bin/python"
+_.python.venv = { path = ".venv", create = true }
+
+[tasks.install]
+description = "Install/sync project dependencies into the venv"
+run = "uv sync --all-groups"
+
+[tasks.check]
+description = "Run all checks in CI mode (ruff lint, ruff format check, pyright)"
+depends = ["check:lint", "check:format", "check:types"]
+
+[tasks."check:lint"]
+run = "uv run ruff check ."
+
+[tasks."check:format"]
+run = "uv run ruff format --check ."
+
+[tasks."check:types"]
+run = "uv run pyright"
+
+[tasks."check:fix"]
+description = "Fix everything fixable: ruff lint --fix, ruff format, then pyright"
+run = ["uv run ruff check --fix .", "uv run ruff format .", "uv run pyright"]
+
+[tasks.test]
+description = "Run the test suite"
+run = "uv run pytest {{arg(name='args', var=true, default='')}}"
+
+[tasks.dev]
+description = "Serve feeds from a local maildir: mise run dev -- /path/to/maildir"
+run = "uv run python -m newsletter_feeds --maildir {{arg(name='maildir')}} --port 8000"
+
+[tasks."docker:build"]
+description = "Build the production docker image"
+run = "docker build -t newsletter-feeds:dev ."

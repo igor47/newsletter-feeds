@@ -1,0 +1,51 @@
+[project]
+name = "newsletter-feeds"
+version = "0.1.0"
+description = "Serve full-text Atom feeds built from newsletter emails in a maildir"
+readme = "README.md"
+authors = [{ name = "Igor Serebryany", email = "igor47@moomers.org" }]
+requires-python = ">=3.13"
+dependencies = ["beautifulsoup4>=4.12"]
+
+[dependency-groups]
+dev = ["pytest>=8.3", "ruff>=0.11", "pyright>=1.1.390"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/newsletter_feeds"]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "SIM", # flake8-simplify
+    "RUF", # ruff-specific
+]
+
+[tool.pyright]
+include = ["src", "tests"]
+venvPath = "."
+venv = ".venv"
+typeCheckingMode = "strict"
+# bs4's attribute values are loosely typed; don't drown the cleaner in casts
+reportUnknownMemberType = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff.lint.per-file-ignores]
+# fixture HTML mirrors real email markup, long lines and all
+"tests/conftest.py" = ["E501"]
