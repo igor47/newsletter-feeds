@@ -51,14 +51,23 @@ def make_handler(archive: Archive) -> type[BaseHTTPRequestHandler]:
                 self._send(404, b"not found\n", "text/plain")
 
         def _index(self) -> bytes:
+            feeds = sorted(archive.feeds().values(), key=lambda f: f.title.lower())
+            # <link rel=alternate> per feed: feed readers' "add subscription"
+            # discovery (miniflux included) lists every feed found on the page
+            links = "".join(
+                f'<link rel="alternate" type="application/atom+xml" '
+                f'title="{escape(f.title)}" href="/feeds/{escape(f.slug)}.xml">'
+                for f in feeds
+            )
             rows = "".join(
                 f'<li><a href="/feeds/{escape(f.slug)}.xml">{escape(f.title)}</a> '
                 f"({len(f.entries)} entries, latest {f.entries[0].date:%Y-%m-%d})</li>"
-                for f in sorted(archive.feeds().values(), key=lambda f: f.title.lower())
+                for f in feeds
             )
             return (
-                "<!doctype html><title>newsletter-feeds</title>"
-                f'<h1>newsletter-feeds</h1><p><a href="/opml">OPML</a></p><ul>{rows}</ul>'
+                f"<!doctype html><html><head><title>newsletter-feeds</title>{links}</head>"
+                f'<body><h1>newsletter-feeds</h1><p><a href="/opml">OPML</a></p>'
+                f"<ul>{rows}</ul></body></html>"
             ).encode()
 
         def log_message(self, format: str, *args: object) -> None:

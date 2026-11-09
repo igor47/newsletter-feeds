@@ -20,7 +20,9 @@ whole post.
    Create the maildir first: `maildirmake ~/newsletters`.
 2. This service mounts only that maildir, read-only, and serves:
    - `/feeds/<list-id>.xml`: Atom, newest 50 entries (`ENTRIES_PER_FEED`)
-   - `/`: an HTML list of feeds; `/opml`: the same as OPML
+   - `/`: an HTML list of feeds, with a `<link rel="alternate">` per feed so a
+     reader's "add subscription" discovery finds them all; `/opml`: the same
+     list as OPML (miniflux's import-from-URL skips feeds it already has)
    - `/healthz`
 3. The feed reader subscribes over a private docker network. There is no
    auth, so do not publish the port or route it through a reverse proxy.

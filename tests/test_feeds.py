@@ -77,6 +77,11 @@ def test_index_opml_health_and_404(server: str):
     assert get(f"{server}/healthz") == (200, b"ok\n")
     status, body = get(f"{server}/")
     assert status == 200 and b"example.substack.com.xml" in body
+    # discoverable by feed readers
+    assert (
+        b'<link rel="alternate" type="application/atom+xml" title="Other" '
+        b'href="/feeds/other.substack.com.xml">' in body
+    )
     status, body = get(f"{server}/opml")
     assert status == 200 and b"/feeds/other.substack.com.xml" in body
     assert get(f"{server}/feeds/nope.xml")[0] == 404
