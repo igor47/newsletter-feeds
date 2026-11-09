@@ -11,6 +11,7 @@ at their real destinations wherever that can be worked out offline.
 import base64
 import binascii
 import json
+import re
 from typing import cast
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
@@ -18,6 +19,10 @@ from bs4 import BeautifulSoup, Tag
 
 # query parameters that identify the subscriber or the campaign
 _DROP_PARAMS = frozenset({"token", "r", "j", "s", "reemail", "redirect", "inbox"})
+
+# subscription-management links, by their text: the URL is per-subscriber
+# and differs by sender, the wording does not
+_MANAGE_LINK = re.compile(r"unsubscribe|subscription preferences|email preferences", re.I)
 
 # tags that never belong in feed content
 _DROP_TAGS = ("head", "title", "meta", "link", "style", "script", "noscript")
@@ -92,7 +97,7 @@ def clean_html(html: str) -> str:
         if not isinstance(href, str):
             continue
         kept = clean_url(href)
-        if kept is None:
+        if kept is None or _MANAGE_LINK.search(a.get_text(" ", strip=True)):
             a.decompose()
         else:
             a["href"] = kept
@@ -108,10 +113,11 @@ def clean_html(html: str) -> str:
                 else:
                     del tag[name]
     post = _substack_post(soup)
+    root = post if post is not None else (soup.body or soup)
+    _flatten_layout_tables(root)
     if post is not None:
         return str(post)
-    body = soup.body
-    return body.decode_contents() if body else str(soup)
+    return root.decode_contents()
 
 
 # inside a Substack post: email furniture that a feed reader shows anyway
@@ -174,7 +180,6 @@ def _substack_post(soup: BeautifulSoup) -> Tag | None:
         return None
     for tag in post.select(", ".join(_SUBSTACK_CHROME)):
         tag.decompose()
-    _flatten_layout_tables(post)
     subtitle = soup.select_one("div.post-header h3.subtitle")
     if subtitle is not None and subtitle.get_text(strip=True):
         subtitle.extract()

@@ -18,6 +18,19 @@ whole post.
    ```
 
    Create the maildir first: `maildirmake ~/newsletters`.
+
+   Mail without a usable `List-Id` can be filed into a feed by the filter
+   adding `X-Newsletter-Feed: <slug>` (and optionally `X-Newsletter-Title`),
+   which take precedence over `List-Id`:
+
+   ```
+   if (/^From:.*<team@news\.samharris\.org>/ && /^Subject:.*Community Digest/)
+   {
+       xfilter "reformail -A 'X-Newsletter-Feed: making-sense-community-digest' \
+                          -A 'X-Newsletter-Title: Making Sense Community Digest'"
+       to "$HOME/newsletters/"
+   }
+   ```
 2. This service mounts only that maildir, read-only, and serves:
    - `/feeds/<list-id>.xml`: Atom, newest 50 entries (`ENTRIES_PER_FEED`)
    - `/`: an HTML list of feeds, with a `<link rel="alternate">` per feed so a
@@ -41,6 +54,9 @@ feed (`src/newsletter_feeds/clean.py`):
   login token, are removed, along with the unsubscribe link;
 - `token`, `r`, `utm_*` and similar parameters are stripped from every link
   and image URL;
+- email layout tables (`role="presentation"`, `cellpadding="0"`) become
+  divs, since readers draw them as bordered data tables; real tables stay;
+- links whose text is "unsubscribe" or "email/subscription preferences" go;
 - for Substack, the email chrome goes too: the hidden preview line, "View in
   browser", the author/date/Paid block and READ IN APP, the Like/Comment row,
   and the footer. The subtitle and the post body (with footnotes) stay.

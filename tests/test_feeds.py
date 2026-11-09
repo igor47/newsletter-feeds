@@ -23,7 +23,7 @@ def test_list_slug():
 
 def test_feeds_group_by_list_and_sort_newest_first(maildir: Path):
     feeds = Archive(maildir).feeds()
-    assert set(feeds) == {"example.substack.com", "other.substack.com"}
+    assert set(feeds) == {"example.substack.com", "other.substack.com", "community-digest"}
     example = feeds["example.substack.com"]
     # the comment reaction (X-Mailgun-Tag: post-comment-reaction) is not a post
     assert [h.subject for h in example.entries] == ["Second post", "First post"]
@@ -37,12 +37,12 @@ def test_entries_per_feed_limit(maildir: Path):
 
 def test_scan_picks_up_moves_and_new_mail(maildir: Path):
     archive = Archive(maildir)
-    assert len(archive.scan()) == 3
+    assert len(archive.scan()) == 4
     # a message moving new/ -> cur/ (being marked seen) is the same message
     (maildir / "new" / "2.b.host").rename(maildir / "cur" / "2.b.host:2,S")
-    assert len(archive.scan()) == 3
+    assert len(archive.scan()) == 4
     (maildir / "cur" / "1.a.host:2,S").unlink()
-    assert len(archive.scan()) == 2
+    assert len(archive.scan()) == 3
 
 
 @pytest.fixture
@@ -89,3 +89,13 @@ def test_index_opml_health_and_404(server: str):
     assert status == 200 and b"/feeds/other.substack.com.xml" in body
     assert get(f"{server}/feeds/nope.xml")[0] == 404
     assert get(f"{server}/etc/passwd")[0] == 404
+
+
+def test_filter_assigned_feed_without_list_id(maildir: Path):
+    archive = Archive(maildir)
+    feed = archive.feeds()["community-digest"]
+    assert feed.title == "Community Digest"
+    assert [h.subject for h in feed.entries] == ["Community Digest Vol. 10"]
+    html = archive.entries(feed)[0].html
+    assert "Digest body" in html and "ablink.news.example.org" in html
+    assert "<table" not in html and "Manage your email" not in html

@@ -31,6 +31,7 @@ class Header:
     path: Path
     slug: str
     author: str
+    feed_title: str
     subject: str
     date: datetime
     link: str | None
@@ -73,7 +74,10 @@ def is_post(msg: EmailMessage) -> bool:
 def _read_header(key: str, path: Path) -> Header | None:
     with path.open("rb") as f:
         msg = email.message_from_binary_file(f, policy=policy.default, _class=EmailMessage)
-    slug = list_slug(str(msg.get("List-Id", "")))
+    # a mail filter can file mail that has no List-Id (or the wrong one) into
+    # a feed of its choosing by adding X-Newsletter-Feed / X-Newsletter-Title
+    override = msg.get("X-Newsletter-Feed")
+    slug = list_slug(str(override if override else msg.get("List-Id", "")))
     if slug is None or not is_post(msg):
         return None
     try:
@@ -90,6 +94,7 @@ def _read_header(key: str, path: Path) -> Header | None:
         path=path,
         slug=slug,
         author=name or addr,
+        feed_title=str(msg.get("X-Newsletter-Title", "")).strip() or name or addr,
         subject=str(msg.get("Subject", "")).strip() or "(no subject)",
         date=date,
         link=link,
@@ -148,7 +153,7 @@ class Archive:
         feeds: dict[str, Feed] = {}
         for slug, headers in by_slug.items():
             headers.sort(key=lambda h: h.date, reverse=True)
-            feeds[slug] = Feed(slug, headers[0].author, headers[: self.entries_per_feed])
+            feeds[slug] = Feed(slug, headers[0].feed_title, headers[: self.entries_per_feed])
         return feeds
 
     def entries(self, feed: Feed) -> list[Entry]:

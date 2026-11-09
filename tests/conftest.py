@@ -114,6 +114,23 @@ def maildir(tmp_path: Path) -> Path:
             tag="post-comment-reaction",
         )
     )
+    # no List-Id, filed into a feed by the mail filter (Braze-style digest)
+    digest = EmailMessage()
+    digest["From"] = "Sam Example <team@news.example.org>"
+    digest["Subject"] = "Community Digest Vol. 10"
+    digest["Date"] = "Mon, 9 Nov 2026 01:00:00 +0000"
+    digest["Message-ID"] = "<digest10@example>"
+    digest["X-Newsletter-Feed"] = "community-digest"
+    digest["X-Newsletter-Title"] = "Community Digest"
+    digest.set_content("plain")
+    digest.add_alternative(
+        '<html><body><table role="presentation" cellpadding="0"><tr><td><p>Digest body</p>'
+        '<a href="https://ablink.news.example.org/ls/click?upn=abc">Read now</a></td></tr>'
+        '</table><p><a href="https://example.org/prefs?u=1">Manage your email subscription'
+        " preferences</a> here.</p></body></html>",
+        subtype="html",
+    )
+    (tmp_path / "new" / "6.f.host").write_bytes(bytes(digest))
     no_list = EmailMessage()
     no_list["Subject"] = "not a newsletter"
     no_list.set_content("hi")
