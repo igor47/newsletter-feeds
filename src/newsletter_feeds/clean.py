@@ -124,6 +124,40 @@ _SUBSTACK_CHROME = (
 )
 
 
+_TABLE_PARTS = ("thead", "tbody", "tfoot", "tr", "td", "th")
+_LAYOUT_ATTRS = ("border", "cellpadding", "cellspacing", "role", "width", "height", "align")
+
+
+def _is_layout_table(table: Tag) -> bool:
+    return (
+        table.get("role") == "presentation"
+        or table.get("cellpadding") == "0"
+        or "image-wrapper" in table.get_attribute_list("class")
+    )
+
+
+def _flatten_layout_tables(root: Tag) -> None:
+    """Turn email layout tables into divs.
+
+    Email HTML wraps every image and embed in tables (``cellpadding=0``,
+    ``role=presentation``) because mail clients cannot be trusted with CSS.
+    Readers style tables as data (Capy Reader draws borders around every
+    cell), so these become plain divs. A table without those markers is
+    content and stays a table.
+    """
+    for table in root.find_all("table"):
+        if not _is_layout_table(table):
+            continue
+        for part in table.find_all(_TABLE_PARTS):
+            if part.find_parent("table") is table:
+                part.name = "div"
+                for attr in _LAYOUT_ATTRS:
+                    del part[attr]
+        table.name = "div"
+        for attr in _LAYOUT_ATTRS:
+            del table[attr]
+
+
 def _substack_post(soup: BeautifulSoup) -> Tag | None:
     """The post itself from a Substack email, minus the email chrome.
 
@@ -140,6 +174,7 @@ def _substack_post(soup: BeautifulSoup) -> Tag | None:
         return None
     for tag in post.select(", ".join(_SUBSTACK_CHROME)):
         tag.decompose()
+    _flatten_layout_tables(post)
     subtitle = soup.select_one("div.post-header h3.subtitle")
     if subtitle is not None and subtitle.get_text(strip=True):
         subtitle.extract()

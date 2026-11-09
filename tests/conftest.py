@@ -51,7 +51,12 @@ and <a href="https://example.org/plain">a plain link</a>.</p>
 <a href="https://substack.com/app-link/post?publication_id=1&amp;post_id=42&amp;r={REF}&amp;token={LOGIN_TOKEN}">Like</a>
 <a href="https://open.substack.com/pub/example/p/hello?r={REF}&amp;action=comments&amp;token={LOGIN_TOKEN}">Comment</a></p>
 <p><a href="{REDIRECT2}">Read in browser</a></p>
+<figure><table border="0" cellpadding="0" cellspacing="0" class="image-wrapper" width="100%"><tr><td>
 <img src="https://substackcdn.com/image/fetch/w_1456/photo.jpg" width="600" height="400">
+</td></tr></table></figure>
+<table class="twitter-embed tweet" role="presentation" cellpadding="0" cellspacing="0"><tr><td>
+<table role="presentation"><tr><td>@someone</td><td>a tweet</td></tr></table></td></tr></table>
+<table><tr><th>Year</th><th>GDP</th></tr><tr><td>2026</td><td>1.2</td></tr></table>
 <img src="https://eotrx.substackcdn.com/o/abc/p.gif?token={LOGIN_TOKEN}">
 <img width="1" height="1" alt="" src="https://email.mg1.substack.com/o/eJxTRACK">
 </div><div class="footnote"><p>1. A footnote.</p></div></div>

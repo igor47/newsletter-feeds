@@ -58,3 +58,11 @@ def test_clean_html_strips_substack_email_chrome():
 def test_clean_html_leaves_other_newsletters_whole():
     html = "<html><body><div class='post'><p>Not substack</p></div><p>footer</p></body></html>"
     assert clean_html(html) == '<div class="post"><p>Not substack</p></div><p>footer</p>'
+
+
+def test_layout_tables_become_divs_but_data_tables_stay():
+    out = clean_html(POST_HTML)
+    assert out.count("<table") == 1
+    assert "<th>Year</th>" in out and "<td>2026</td>" in out
+    assert "photo.jpg" in out and "a tweet" in out
+    assert "cellpadding" not in out and "presentation" not in out
